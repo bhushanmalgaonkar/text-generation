@@ -55,10 +55,10 @@ class Probabilistic:
 
     def generate_text(self, max_len=100, seed1=None, seed2=None):
         text = [self.END_OF_LINE]
-        if seed2 in self.word_index:
-            text.append(seed2)
         if seed1 in self.word_index:
             text.append(seed1)
+        if seed2 in self.word_index:
+            text.append(seed2)
 
         for i in range(max_len):
             if len(text) > 1:
