@@ -2,10 +2,23 @@
 
 import math
 import numpy as np
+import os
 import string
 
 
 class Probabilistic:
+    """
+    Reads text from given file and fits it to the model
+    """
+
+    def fit_from(self, filepath):
+        if not os.path.exists(filepath):
+            raise Exception('File {} does not exist'.format(filepath))
+        with open(filepath, encoding='utf8', errors='ignore') as f:
+            text = (' ' + self.END_OF_LINE + ' ').join(line.strip()
+                                                       for line in f.readlines() if len(line) > 0)
+        self.fit(text)
+
     """
     Calculates required probabilities for prediction
     """
@@ -36,7 +49,26 @@ class Probabilistic:
         choice = np.random.choice(candidates, size=1, p=distribution)[0]
         return self.word_value[choice]
 
-    # end of methods to override
+    """
+    Generates new text using 0, 1 or 2 seeds given. If no seed is supplied END_OF_LINE is used as seed
+    """
+
+    def generate_text(self, max_len=100, seed1=None, seed2=None):
+        text = [self.END_OF_LINE]
+        if seed2 in self.word_index:
+            text.append(seed2)
+        if seed1 in self.word_index:
+            text.append(seed1)
+
+        for i in range(max_len):
+            if len(text) > 1:
+                next = self.next(text[-1], text[-2])
+            else:
+                next = self.next(text[-1])
+            if next == self.END_OF_LINE:
+                break
+            text.append(next)
+        return ' '.join(text[1:])
 
     def __init__(self):
         """
@@ -62,8 +94,8 @@ class Probabilistic:
 
         Structure:
         [
-            word_i=0: [
-                word_i-1=0, word_i-1=1, ...
+            word_i-1=0: [
+                word_i=0, word_i=1, ...
             ],
             ...
         ]
@@ -76,9 +108,9 @@ class Probabilistic:
 
         Structure:
         [
-            word_i=0: [
+            word_i-2=0: [
                 word_i-1=0: [
-                    word_i-2=0, word_i-2=1, ...
+                    word_i=0, word_i=1, ...
                 ],
                 word_i-1=1, ...
             ],
@@ -86,6 +118,8 @@ class Probabilistic:
         ]
         """
         self.transition_2_prob = None
+
+        self.END_OF_LINE = 'endofline'
 
         # Hyperparameters
         self.MISSING_WORD_PROBABILITY = 10e-5
